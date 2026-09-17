@@ -25,16 +25,17 @@ Xây dựng một hệ thống đặt lịch khám bệnh gọn nhẹ nhưng chu
 - **Dễ bảo trì & Mở rộng:** Phân tách rõ ràng giữa HTTP layer, Validation layer, Business logic layer và Data access layer.
 
 ### 1.2. Các nhóm người dùng (Roles)
-1. **Bệnh nhân (Patient):**
+Hiện tại hệ thống chỉ triển khai hai role tài khoản: `user` và `admin`.
+Bác sĩ là dữ liệu hồ sơ chuyên môn trong `doctors`, chưa có role hoặc luồng
+đăng nhập riêng.
+
+1. **Người dùng (User):**
    - Đăng ký / Đăng nhập tài khoản cá nhân.
    - Tìm kiếm bác sĩ theo chuyên khoa, tên bác sĩ, giá khám, đánh giá.
    - Xem lịch làm việc và các khung giờ còn trống (Available Slots) của bác sĩ.
    - Đặt lịch khám, nhập mô tả triệu chứng, nhận mã phiếu khám.
    - Xem lịch sử đặt khám và hủy lịch nếu chưa tới hạn.
-2. **Bác sĩ (Doctor):**
-   - Xem lịch khám của chính mình theo ngày/tuần.
-   - Cập nhật hồ sơ bác sĩ (chuyên khoa, số năm kinh nghiệm, học hàm/học vị, tiểu sử, giá khám).
-3. **Quản trị viên (Admin):**
+2. **Quản trị viên (Admin):**
    - Quản lý danh mục Chuyên khoa (Thêm, Sửa, Xóa, Ảnh đại diện).
    - Quản lý Bác sĩ (Thêm mới bác sĩ, liên kết tài khoản, phân chuyên khoa).
    - Quản lý Ca khám / Khung giờ (Khởi tạo slot khám theo ngày/khung giờ).
@@ -62,7 +63,7 @@ Thay vì viết toàn bộ logic vào Controller (gây phình to Fat Controller)
 
 1. **Routing & Middleware:** 
    - Định tuyến API tại `routes/api.php`.
-   - `CheckRole` middleware kiểm tra quyền truy cập theo vai trò (`admin`, `doctor`, `patient`).
+   - `CheckRole` middleware kiểm tra quyền truy cập theo vai trò (`admin`, `user`).
    - `auth:sanctum` xác thực Bearer Token.
 2. **Form Requests (`app/Http/Requests`):**
    - Đảm nhiệm việc validate dữ liệu đầu vào, định nghĩa rules và thông báo lỗi.
@@ -183,76 +184,117 @@ youmed-mini/
 └── docs/                                         [Tài liệu dự án & Nhật ký phát triển]
     ├── product-brief.md                          [Đặc tả yêu cầu & phạm vi tính năng]
     ├── ai-development-log.md                     [Nhật ký phân tích & prompt kỹ thuật với AI]
-    └── test-cases.md                             [Kịch bản kiểm thử API & UI]
+    ├── test-cases.md                             [Kịch bản kiểm thử API & UI]
+    └── database-schema.md                        [Nguồn tham chiếu schema và ràng buộc dữ liệu]
 ```
 
 ---
 
 ## 4. Mô hình dữ liệu (Database Schema & ERD)
 
+Database gồm các thực thể tài khoản, hồ sơ người bệnh, chuyên khoa, bác sĩ,
+bệnh viện, loại dịch vụ khám, khung giờ, lượt đặt lịch và thanh toán. `SLOTS`
+dùng mô hình đa hình qua cặp `owner_type`/`owner_id`: một slot thuộc bác sĩ hoặc
+bệnh viện. `BOOKINGS` cũng dùng `booking_type` để phân biệt đặt bác sĩ và đặt
+dịch vụ tại bệnh viện.
+
 ```mermaid
 erDiagram
-    USERS ||--o| DOCTORS : "is a doctor profile"
+    USERS ||--o{ PATIENT_PROFILES : "owns"
     USERS ||--o{ BOOKINGS : "places"
-    SPECIALTIES ||--o{ DOCTORS : "categorizes"
-    DOCTORS ||--o{ SLOTS : "has work schedules"
-    DOCTORS ||--o{ BOOKINGS : "assigned to"
-    SLOTS ||--o{ BOOKINGS : "contains"
+    PATIENT_PROFILES ||--o{ BOOKINGS : "receives_care_in"
+    SPECIALTIES ||--o{ DOCTORS : "contains"
+    DOCTORS ||--o{ BOOKINGS : "assigned_to (booking_type=doctor)"
+    HOSPITALS ||--o{ EXAM_TYPES : "offers"
+    HOSPITALS ||--o{ BOOKINGS : "assigned_to (booking_type=hospital)"
+    EXAM_TYPES ||--o{ BOOKINGS : "selected_in"
+    SLOTS ||--o{ BOOKINGS : "reserved_in"
+    DOCTORS ||..o{ SLOTS : "owns (owner_type=doctor)"
+    HOSPITALS ||..o{ SLOTS : "owns (owner_type=hospital)"
+    BOOKINGS ||--o| PAYMENTS : "has"
 
     USERS {
         bigint id PK
-        string name
-        string email UK
-        string password
-        string phone
-        string role "admin | doctor | patient"
-        timestamp created_at
+        varchar name
+        varchar email UK
+        varchar password
+        varchar phone
+        enum role
     }
-
     SPECIALTIES {
         bigint id PK
-        string name
-        string slug UK
-        string description
-        string image_url
-        timestamp created_at
+        varchar name
+        varchar image
     }
-
+    PATIENT_PROFILES {
+        bigint id PK
+        bigint user_id FK
+        varchar full_name
+        date dob
+        enum gender
+        varchar phone
+        varchar relationship
+    }
     DOCTORS {
         bigint id PK
-        bigint user_id FK
         bigint specialty_id FK
-        string title "BS.CKI, ThS.BS, PGS.TS..."
+        varchar name
         text bio
-        int experience_years
-        decimal consultation_fee
-        decimal rating
-        timestamp created_at
+        varchar city
+        varchar avatar
     }
-
+    HOSPITALS {
+        bigint id PK
+        varchar name
+        varchar address
+        varchar city
+        varchar image
+    }
+    EXAM_TYPES {
+        bigint id PK
+        bigint hospital_id FK
+        varchar name
+        decimal price
+    }
     SLOTS {
         bigint id PK
-        bigint doctor_id FK
-        date date
+        enum owner_type
+        bigint owner_id
+        date work_date
         time start_time
         time end_time
-        int max_patients
+        int capacity
         int booked_count
-        string status "available | full | cancelled"
-        timestamp created_at
+        enum status
     }
-
     BOOKINGS {
         bigint id PK
-        string booking_code UK
+        varchar code UK
         bigint user_id FK
+        bigint patient_profile_id FK
+        enum booking_type
         bigint doctor_id FK
+        bigint hospital_id FK
+        bigint exam_type_id FK
         bigint slot_id FK
-        text patient_notes
-        string status "pending | confirmed | completed | cancelled"
-        timestamp created_at
+        text symptoms
+        enum status
+        datetime slot_hold_expires_at
+    }
+    PAYMENTS {
+        bigint id PK
+        bigint booking_id FK "UK"
+        enum method
+        decimal exam_fee
+        decimal service_fee
+        decimal total_amount
+        enum status
+        varchar transaction_code
     }
 ```
+
+Chi tiết kiểu dữ liệu, enum và quy tắc toàn vẹn được duy trì tại
+[`docs/database-schema.md`](docs/database-schema.md).
 
 ---
 
@@ -300,7 +342,7 @@ sequenceDiagram
     participant Svc as BookingService
     participant DB as Cơ sở dữ liệu
 
-    Patient->>Ctrl: POST /api/bookings { doctor_id, slot_id, notes }
+    Patient->>Ctrl: POST /api/bookings { booking_type, patient_profile_id, slot_id, symptoms }
     Ctrl->>Svc: createBooking(userId, data)
     Note over Svc,DB: Bắt đầu DB Transaction
     Svc->>DB: SELECT * FROM slots WHERE id = slot_id FOR UPDATE (Khóa dòng Slot)
@@ -311,7 +353,7 @@ sequenceDiagram
         Svc-->>Ctrl: Ném BookingAlreadyExistsException
         Ctrl-->>Patient: 409 Conflict { error: "Bạn đã có lịch trong khung giờ này" }
     else Hợp lệ
-        Svc->>DB: INSERT INTO bookings (booking_code, user_id, slot_id, status='confirmed')
+        Svc->>DB: INSERT INTO bookings (code, user_id, patient_profile_id, booking_type, slot_id, symptoms, status)
         Svc->>DB: UPDATE slots SET booked_count = booked_count + 1
         Note over Svc,DB: Commit Transaction & Mở khóa
         Svc-->>Ctrl: Trả về đối tượng Booking
@@ -449,6 +491,7 @@ $exceptions->render(function (BusinessException $e) {
 ## 8. Kế hoạch tài liệu (`docs/`)
 
 Trong thư mục `docs/`, các file tài liệu chuyên sâu được phân định như sau:
-1. **[product-brief.md](file:///d:/mini_project/docs/product-brief.md)**: Đặc tả chi tiết yêu cầu sản phẩm, User Stories và tiêu chí nghiệm thu (Acceptance Criteria).
-2. **[ai-development-log.md](file:///d:/mini_project/docs/ai-development-log.md)**: Ghi chép quá trình tương tác, prompt log, các quyết định kiến trúc quan trọng khi phát triển cùng AI.
-3. **[test-cases.md](file:///d:/mini_project/docs/test-cases.md)**: Danh sách ca kiểm thử tự động và thủ công (Unit test, Feature test cho Booking concurrency, API test).
+1. **[product-brief.md](docs/product-brief.md)**: Đặc tả chi tiết yêu cầu sản phẩm, User Stories và tiêu chí nghiệm thu (Acceptance Criteria).
+2. **[ai-development-log.md](docs/ai-development-log.md)**: Ghi chép quá trình tương tác, prompt log, các quyết định kiến trúc quan trọng khi phát triển cùng AI.
+3. **[test-cases.md](docs/test-cases.md)**: Danh sách ca kiểm thử tự động và thủ công (Unit test, Feature test cho Booking concurrency, API test).
+4. **[database-schema.md](docs/database-schema.md)**: Mô hình ERD, danh mục bảng/cột và các quy tắc toàn vẹn của database.

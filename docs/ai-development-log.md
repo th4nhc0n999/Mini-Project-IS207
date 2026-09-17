@@ -20,8 +20,13 @@ Nhật ký ghi lại các giai đoạn phát triển, quyết định kiến tr�
 
 ## 📅 Giai đoạn tiếp theo (Roadmap)
 - **Giai đoạn 2 (Database & Models):**
-  - Viết migrations cho các bảng: `users`, `specialties`, `doctors`, `slots`, `bookings`.
+  - Viết migrations cho các bảng: `users`, `patient_profiles`, `specialties`,
+    `doctors`, `hospitals`, `exam_types`, `slots`, `bookings`, `payments`.
   - Thiết lập quan hệ Eloquent ORM và Model Factories / Seeders cho dữ liệu mẫu.
+  - Tuân thủ mô hình slot đa hình (`owner_type`/`owner_id`) và phân loại booking
+    theo `booking_type`; xem [database-schema.md](database-schema.md).
+  - Phạm vi role tài khoản hiện tại chỉ gồm `user` và `admin`; `doctors` là hồ
+    sơ chuyên môn do admin quản lý, chưa có xác thực hoặc quyền riêng cho bác sĩ.
 - **Giai đoạn 3 (Backend API & Services):**
   - Cài đặt Laravel Sanctum & cấu hình CORS.
   - Viết Form Requests & Business Services.

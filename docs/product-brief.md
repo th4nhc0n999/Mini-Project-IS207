@@ -1,7 +1,7 @@
-# Product Brief — YouMed-Mini
+# Product Brief — MedSi
 
 ## 1. Giới thiệu sản phẩm
-**YouMed-Mini** là ứng dụng web đặt lịch khám bệnh trực tuyến mô phỏng nền tảng YouMed, kết nối người bệnh với các bác sĩ thuộc nhiều chuyên khoa khác nhau một cách nhanh chóng, minh bạch và chính xác.
+**MedSi** là ứng dụng web đặt lịch khám bệnh trực tuyến, kết nối người bệnh với các bác sĩ và dịch vụ khám thuộc nhiều chuyên khoa khác nhau một cách nhanh chóng, minh bạch và chính xác.
 
 ---
 
@@ -31,7 +31,7 @@
 - Quản lý nhiều hồ sơ người bệnh (`patient_profiles`) thuộc cùng một tài khoản,
   bao gồm họ tên, ngày sinh, giới tính, số điện thoại và quan hệ.
 - Đăng nhập hệ thống (nhận Bearer Token qua Laravel Sanctum).
-- Phân quyền (Role-based): `user`, `admin`. Bác sĩ hiện chỉ là hồ sơ chuyên
+- Phân quyền (Role-based): `patient`, `admin`. Bác sĩ hiện chỉ là hồ sơ chuyên
   môn được quản trị viên quản lý, chưa có tài khoản hoặc role riêng.
 - Lấy thông tin cá nhân hiện tại (`/api/auth/me`).
 

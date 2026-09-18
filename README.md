@@ -1,6 +1,6 @@
-# YouMed-Mini — Hệ Thống Đặt Lịch Khám Bệnh Trực Tuyến
+# MedSi — Hệ Thống Đặt Lịch Khám Bệnh Trực Tuyến
 
-> Dự án mô phỏng nền tảng đặt lịch khám bệnh theo mô hình YouMed, áp dụng kiến trúc tách rời (**Decoupled Client-Server Architecture**): **Laravel 12 API Only** ở Backend và **React + Vite + Tailwind CSS + shadcn/ui** ở Frontend.
+> MedSi áp dụng kiến trúc tách rời (**Decoupled Client-Server Architecture**): **Laravel 12 API Only** ở Backend và **React + Vite** ở Frontend.
 
 ---
 
@@ -25,7 +25,7 @@ Xây dựng một hệ thống đặt lịch khám bệnh gọn nhẹ nhưng chu
 - **Dễ bảo trì & Mở rộng:** Phân tách rõ ràng giữa HTTP layer, Validation layer, Business logic layer và Data access layer.
 
 ### 1.2. Các nhóm người dùng (Roles)
-Hiện tại hệ thống chỉ triển khai hai role tài khoản: `user` và `admin`.
+Hiện tại hệ thống chỉ triển khai hai role tài khoản: `patient` và `admin`.
 Bác sĩ là dữ liệu hồ sơ chuyên môn trong `doctors`, chưa có role hoặc luồng
 đăng nhập riêng.
 
@@ -51,19 +51,19 @@ Dự án áp dụng mô hình **Client - Server RESTful API**:
 graph TD
     Client["Client (Browser / React SPA)"] 
     API["Laravel 12 RESTful API"]
-    DB[("Database (SQLite / MySQL)")]
+      DB[("Database (MySQL)")]
 
     Client -- "HTTP Requests (JSON + Bearer Token)" --> API
     API -- "JSON Response (API Resources)" --> Client
     API -- "Eloquent ORM / Query Builder" --> DB
 ```
 
-### 2.1. Backend: Service Layer & Custom Exceptions Pattern
+### 2.1. Backend: Service Layer & Custom Exceptions Pattern (kiến trúc mục tiêu)
 Thay vì viết toàn bộ logic vào Controller (gây phình to Fat Controller), hệ thống phân tách thành 5 tầng rõ rệt:
 
 1. **Routing & Middleware:** 
    - Định tuyến API tại `routes/api.php`.
-   - `CheckRole` middleware kiểm tra quyền truy cập theo vai trò (`admin`, `user`).
+   - `CheckRole` middleware kiểm tra quyền truy cập theo vai trò (`admin`, `patient`).
    - `auth:sanctum` xác thực Bearer Token.
 2. **Form Requests (`app/Http/Requests`):**
    - Đảm nhiệm việc validate dữ liệu đầu vào, định nghĩa rules và thông báo lỗi.
@@ -85,7 +85,7 @@ Thay vì viết toàn bộ logic vào Controller (gây phình to Fat Controller)
 ## 3. Cấu trúc thư mục chi tiết
 
 ```
-youmed-mini/
+Mini-Project-IS207/
 │
 ├── backend/                                      [Laravel 12 — API only]
 │   ├── app/
@@ -192,7 +192,7 @@ youmed-mini/
 
 ## 4. Mô hình dữ liệu (Database Schema & ERD)
 
-Database gồm các thực thể tài khoản, hồ sơ người bệnh, chuyên khoa, bác sĩ,
+Database nghiệp vụ gồm 9 bảng: tài khoản, hồ sơ người bệnh, chuyên khoa, bác sĩ,
 bệnh viện, loại dịch vụ khám, khung giờ, lượt đặt lịch và thanh toán. `SLOTS`
 dùng mô hình đa hình qua cặp `owner_type`/`owner_id`: một slot thuộc bác sĩ hoặc
 bệnh viện. `BOOKINGS` cũng dùng `booking_type` để phân biệt đặt bác sĩ và đặt
@@ -366,8 +366,9 @@ sequenceDiagram
 ## 6. Hướng dẫn cài đặt và chạy dự án
 
 ### 6.1. Yêu cầu môi trường (Prerequisites)
-- **PHP**: Phiên bản `>= 8.2` (có cài đủ extension: `pdo`, `pdo_sqlite` hoặc `pdo_mysql`, `mbstring`, `openssl`, `curl`)
+- **PHP**: Phiên bản `>= 8.2` (có cài đủ extension: `pdo`, `pdo_mysql`, `mbstring`, `openssl`, `curl`)
 - **Composer**: Phiên bản `>= 2.x`
+- **MySQL**: Phiên bản `>= 8.0` (hoặc MariaDB tương thích), đang chạy tại cổng `3306`
 - **Node.js**: Phiên bản `>= 18.x` hoặc `>= 20.x`
 - **npm** hoặc **yarn** / **pnpm**
 
@@ -397,20 +398,42 @@ sequenceDiagram
    ```
 
 5. **Cấu hình Database:**
-   - Dự án đã tích hợp sẵn **SQLite** tại `backend/database/database.sqlite`.
-   - Trong file `.env`, đảm bảo thiết lập:
+   - Tạo database và database test trong MySQL (đổi tên theo `.env` nếu bạn dùng tên khác):
+       ```sql
+      CREATE DATABASE medsi CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+      CREATE DATABASE medsi_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+       ```
+    - Trong file `.env`, đảm bảo thiết lập:
      ```ini
-     DB_CONNECTION=sqlite
-     # DB_DATABASE=/đường_dẫn_tuyệt_đối/database.sqlite hoặc để mặc định Laravel 12
+       DB_CONNECTION=mysql
+       DB_HOST=127.0.0.1
+       DB_PORT=3306
+      DB_DATABASE=medsi
+       DB_USERNAME=root
+       DB_PASSWORD=your_mysql_password
      ```
-   *(Nếu bạn muốn dùng MySQL, chỉ cần đổi `DB_CONNECTION=mysql`, nhập `DB_HOST=127.0.0.1`, `DB_PORT=3306`, `DB_DATABASE=youmed_mini`, `DB_USERNAME`, `DB_PASSWORD`).*
 
 6. **Chạy Migration & Seeder (Tạo bảng & Dữ liệu mẫu):**
    ```bash
    php artisan migrate --seed
    ```
 
-7. **Khởi động Backend Server:**
+7. **Kiểm tra migration và dữ liệu trên MySQL:**
+   ```bash
+   php artisan config:clear
+   php artisan about
+   php artisan migrate:status
+   php artisan tinker --execute="dump(DB::connection()->getDatabaseName(), DB::select('SHOW TABLES'))"
+   ```
+   Kết quả hợp lệ phải cho thấy connection là `mysql`, database là `medsi`,
+   migration `Ran`, và có các bảng `users`, `patient_profiles`, `slots`,
+   `bookings`, `payments` cùng các bảng còn lại. Có thể kiểm tra dữ liệu mẫu:
+   ```bash
+   php artisan tinker --execute="dump(App\\Models\\User::count(), App\\Models\\Booking::count(), App\\Models\\Payment::count())"
+   ```
+   Các count này phải lớn hơn `0` sau khi chạy `--seed`.
+
+8. **Khởi động Backend Server:**
    ```bash
    php artisan serve
    ```

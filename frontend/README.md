@@ -1,16 +1,33 @@
-# React + Vite
+# MedSi Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend của MedSi sử dụng React 19 và Vite. Frontend gọi backend Laravel qua
+HTTP API và dùng biến môi trường `VITE_API_BASE_URL` để cấu hình địa chỉ API.
 
-Currently, two official plugins are available:
+## Chạy local
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cd frontend
+npm install
+```
 
-## React Compiler
+Tạo file `.env`:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```ini
+VITE_API_BASE_URL=http://127.0.0.1:8000/api
+```
 
-## Expanding the ESLint configuration
+Khởi động development server:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run dev
+```
+
+## Kiểm tra và build
+
+```bash
+npm run lint
+npm run build
+```
+
+Xem kiến trúc chung và tài liệu database tại [README.md](../README.md) và
+[docs/database-schema.md](../docs/database-schema.md).

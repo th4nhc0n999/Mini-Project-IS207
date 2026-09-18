@@ -1,6 +1,6 @@
-# Test Cases — YouMed-Mini
+# Test Cases — MedSi
 
-Tài liệu mô tả các kịch bản kiểm thử (Test Scenarios & Test Cases) cho hệ thống YouMed-Mini.
+Tài liệu mô tả các kịch bản kiểm thử (Test Scenarios & Test Cases) cho hệ thống MedSi.
 
 ---
 
@@ -45,7 +45,7 @@ Tài liệu mô tả các kịch bản kiểm thử (Test Scenarios & Test Cases
 
 | ID | Test Case | Dữ liệu đầu vào | Kết quả mong đợi | HTTP Status |
 |---|---|---|---|---|
-| **ADM-01** | User với role `user` truy cập API Admin | Header kèm token của user | `CheckRole` middleware chặn lại, trả về lỗi Không có quyền | `403 Forbidden` |
+| **ADM-01** | Patient với role `patient` truy cập API Admin | Header kèm token của patient | `CheckRole` middleware chặn lại, trả về lỗi Không có quyền | `403 Forbidden` |
 | **ADM-02** | Admin tạo mới chuyên khoa | Dữ liệu chuyên khoa hợp lệ | Tạo chuyên khoa thành công | `201 Created` |
 | **ADM-03** | Admin tạo mới slot ca khám | `owner_type`, `owner_id`, `work_date`, `start_time`, `end_time`, `capacity` | Slot được tạo ở trạng thái `available` | `201 Created` |
 | **ADM-04** | Admin cập nhật trạng thái booking | `booking_id`, `status = completed` | Trạng thái phiếu khám chuyển sang Đã hoàn thành | `200 OK` |

@@ -1,3 +1,5 @@
+<?php
+
 return [
 
     // 1. Các đường dẫn được áp dụng CORS (toàn bộ api và đường dẫn lấy cookie csrf)

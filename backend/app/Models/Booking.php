@@ -81,4 +81,20 @@ class Booking extends Model
     {
         return $this->hasOne(Payment::class);
     }
+
+    /**
+     * Scope a query to only include bookings for a given user.
+     */
+    public function scopeForUser($query, int $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Get booking list by user_id.
+     */
+    public static function getByUserId(int $userId)
+    {
+        return static::where('user_id', $userId)->get();
+    }
 }

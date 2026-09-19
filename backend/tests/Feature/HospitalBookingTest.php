@@ -14,7 +14,6 @@ use App\Models\ExamType;
 use App\Models\Hospital;
 use App\Models\PatientProfile;
 use App\Models\Slot;
-use App\Models\Specialty;
 use App\Models\User;
 use App\Services\BookingService;
 use Illuminate\Database\QueryException;
@@ -38,39 +37,32 @@ class HospitalBookingTest extends TestCase
         parent::setUp();
         $this->bookingService = new BookingService();
 
-        // Tạo user và hồ sơ người bệnh
+        // Khởi tạo người dùng và hồ sơ bệnh nhân qua Factory
         $this->user = User::factory()->create();
-        $this->patientProfile = PatientProfile::create([
+        $this->patientProfile = PatientProfile::factory()->create([
             'user_id' => $this->user->id,
             'full_name' => 'Nguyễn Văn Bệnh Nhân',
-            'dob' => '1995-05-15',
-            'gender' => 'male',
             'phone' => '0901234567',
-            'relationship' => 'self',
         ]);
 
-        // Tạo bệnh viện và gói dịch vụ khám
-        $this->hospital = Hospital::create([
+        // Khởi tạo cơ sở y tế và loại hình dịch vụ khám qua Factory
+        $this->hospital = Hospital::factory()->create([
             'name' => 'Bệnh viện Đa khoa MedSi',
-            'description' => 'Bệnh viện đạt chuẩn quốc tế',
             'address' => '123 Đường Y Dược, Quận 1',
             'city' => 'Hồ Chí Minh',
             'hotline' => '028999999',
         ]);
 
-        $this->examType = ExamType::create([
-            'hospital_id' => $this->hospital->id,
+        $this->examType = ExamType::factory()->for($this->hospital)->create([
             'name' => 'Gói khám tim mạch chuyên sâu',
             'price' => 750000,
         ]);
 
-        // Tạo khung giờ khám thuộc bệnh viện
-        $this->slot = Slot::create([
-            'owner_type' => 'hospital',
-            'owner_id' => $this->hospital->id,
+        // Khởi tạo khung giờ khám của bệnh viện qua Factory
+        $this->slot = Slot::factory()->forHospital($this->hospital, 5)->create([
             'work_date' => now()->addDay()->toDateString(),
-            'start_time' => '09:00',
-            'end_time' => '10:00',
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
             'capacity' => 5,
             'booked_count' => 0,
             'status' => 'available',
@@ -108,7 +100,7 @@ class HospitalBookingTest extends TestCase
         $this->assertNotNull($booking->code);
         $this->assertStringStartsWith('BK'.now()->format('Ymd'), $booking->code);
 
-        // Bác sĩ phải là NULL
+        // Bác sĩ phải là NULL cho hospital booking
         $this->assertNull($booking->doctor_id);
 
         // Kiểm tra thời hạn giữ chỗ
@@ -132,12 +124,10 @@ class HospitalBookingTest extends TestCase
 
     public function test_slot_status_changes_to_full_when_capacity_reached(): void
     {
-        $singleSlot = Slot::create([
-            'owner_type' => 'hospital',
-            'owner_id' => $this->hospital->id,
+        $singleSlot = Slot::factory()->forHospital($this->hospital, 1)->create([
             'work_date' => now()->addDay()->toDateString(),
-            'start_time' => '14:00',
-            'end_time' => '15:00',
+            'start_time' => '14:00:00',
+            'end_time' => '15:00:00',
             'capacity' => 1,
             'booked_count' => 0,
             'status' => 'available',
@@ -226,8 +216,8 @@ class HospitalBookingTest extends TestCase
 
     public function test_patient_can_rebook_slot_if_previous_booking_was_cancelled(): void
     {
-        // 1. Tạo trước 1 booking có trạng thái cancelled cho bệnh nhân A trên slot X
-        $cancelledBooking = Booking::create([
+        // 1. Tạo trước 1 booking có trạng thái cancelled cho bệnh nhân A trên slot X bằng Factory
+        $cancelledBooking = Booking::factory()->cancelled()->create([
             'user_id' => $this->user->id,
             'patient_profile_id' => $this->patientProfile->id,
             'booking_type' => 'hospital',
@@ -235,7 +225,6 @@ class HospitalBookingTest extends TestCase
             'hospital_id' => $this->hospital->id,
             'exam_type_id' => $this->examType->id,
             'slot_id' => $this->slot->id,
-            'status' => 'cancelled',
         ]);
 
         $data = [
@@ -267,23 +256,41 @@ class HospitalBookingTest extends TestCase
         $this->assertEquals('pending_payment', $bookingsInDb->firstWhere('id', $newBooking->id)->status);
     }
 
-    public function test_throws_invalid_slot_exception_when_slot_belongs_to_another_hospital(): void
+    public function test_patient_can_rebook_slot_if_previous_booking_was_rejected(): void
     {
-        $otherHospital = Hospital::create([
-            'name' => 'Bệnh viện Quận 2',
-            'address' => '456 Mai Chí Thọ, Quận 2',
-            'city' => 'Hồ Chí Minh',
+        // 1. Tạo trước 1 booking có trạng thái rejected cho bệnh nhân A trên slot X
+        $rejectedBooking = Booking::factory()->create([
+            'user_id' => $this->user->id,
+            'patient_profile_id' => $this->patientProfile->id,
+            'booking_type' => 'hospital',
+            'doctor_id' => null,
+            'hospital_id' => $this->hospital->id,
+            'exam_type_id' => $this->examType->id,
+            'slot_id' => $this->slot->id,
+            'status' => 'rejected',
         ]);
 
-        $otherSlot = Slot::create([
-            'owner_type' => 'hospital',
-            'owner_id' => $otherHospital->id,
+        $data = [
+            'patient_profile_id' => $this->patientProfile->id,
+            'hospital_id' => $this->hospital->id,
+            'exam_type_id' => $this->examType->id,
+            'slot_id' => $this->slot->id,
+            'symptoms' => 'Đặt lại sau khi lịch hẹn trước bị từ chối',
+        ];
+
+        // 2. Đặt lại thành công
+        $newBooking = $this->bookingService->createHospitalBooking($this->user->id, $data);
+
+        $this->assertInstanceOf(Booking::class, $newBooking);
+        $this->assertEquals('pending_payment', $newBooking->status);
+        $this->assertNotEquals($rejectedBooking->id, $newBooking->id);
+    }
+
+    public function test_throws_invalid_slot_exception_when_slot_belongs_to_another_hospital(): void
+    {
+        $otherHospital = Hospital::factory()->create();
+        $otherSlot = Slot::factory()->forHospital($otherHospital)->create([
             'work_date' => now()->addDay()->toDateString(),
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'capacity' => 5,
-            'booked_count' => 0,
-            'status' => 'available',
         ]);
 
         $data = [
@@ -299,22 +306,9 @@ class HospitalBookingTest extends TestCase
 
     public function test_throws_invalid_slot_exception_when_slot_owner_type_is_doctor(): void
     {
-        $specialty = Specialty::create(['name' => 'Nhi khoa']);
-        $doctor = Doctor::create([
-            'specialty_id' => $specialty->id,
-            'name' => 'Bác sĩ A',
-            'city' => 'Hồ Chí Minh',
-        ]);
-
-        $doctorSlot = Slot::create([
-            'owner_type' => 'doctor',
-            'owner_id' => $doctor->id,
+        $doctor = Doctor::factory()->create();
+        $doctorSlot = Slot::factory()->forDoctor($doctor)->create([
             'work_date' => now()->addDay()->toDateString(),
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'capacity' => 1,
-            'booked_count' => 0,
-            'status' => 'available',
         ]);
 
         $data = [
@@ -330,17 +324,8 @@ class HospitalBookingTest extends TestCase
 
     public function test_throws_exam_type_mismatch_exception_when_exam_type_not_in_hospital(): void
     {
-        $otherHospital = Hospital::create([
-            'name' => 'Bệnh viện Khác',
-            'address' => '789 Đường Giải Phóng',
-            'city' => 'Hà Nội',
-        ]);
-
-        $otherExamType = ExamType::create([
-            'hospital_id' => $otherHospital->id,
-            'name' => 'Khám tổng quát khác',
-            'price' => 300000,
-        ]);
+        $otherHospital = Hospital::factory()->create();
+        $otherExamType = ExamType::factory()->for($otherHospital)->create();
 
         $data = [
             'patient_profile_id' => $this->patientProfile->id,
@@ -356,13 +341,8 @@ class HospitalBookingTest extends TestCase
     public function test_throws_patient_profile_not_found_when_profile_does_not_belong_to_user(): void
     {
         $otherUser = User::factory()->create();
-        $otherProfile = PatientProfile::create([
+        $otherProfile = PatientProfile::factory()->create([
             'user_id' => $otherUser->id,
-            'full_name' => 'Bệnh nhân của người khác',
-            'dob' => '1998-08-20',
-            'gender' => 'female',
-            'phone' => '0907654321',
-            'relationship' => 'other',
         ]);
 
         $data = [
@@ -402,25 +382,19 @@ class HospitalBookingTest extends TestCase
         $conn2 = DB::connection('mysql_concurrency');
 
         // Tạo slot có đúng capacity = 1
-        $singleSlot = Slot::create([
-            'owner_type' => 'hospital',
-            'owner_id' => $this->hospital->id,
+        $singleSlot = Slot::factory()->forHospital($this->hospital, 1)->create([
             'work_date' => now()->addDay()->toDateString(),
-            'start_time' => '16:00',
-            'end_time' => '17:00',
+            'start_time' => '16:00:00',
+            'end_time' => '17:00:00',
             'capacity' => 1,
             'booked_count' => 0,
             'status' => 'available',
         ]);
 
         $secondUser = User::factory()->create();
-        $secondProfile = PatientProfile::create([
+        $secondProfile = PatientProfile::factory()->create([
             'user_id' => $secondUser->id,
             'full_name' => 'Bệnh nhân thứ hai',
-            'dob' => '1990-01-01',
-            'gender' => 'female',
-            'phone' => '0988776655',
-            'relationship' => 'other',
         ]);
 
         $data1 = [

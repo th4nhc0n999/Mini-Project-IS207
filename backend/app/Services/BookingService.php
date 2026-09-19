@@ -47,33 +47,32 @@ class BookingService
      */
     public function createHospitalBooking(int $userId, array $data): Booking
     {
-        // 1. Kiểm tra hồ sơ bệnh nhân phải thuộc tài khoản user hiện tại
-        $patientProfile = PatientProfile::where('id', $data['patient_profile_id'])
-            ->where('user_id', $userId)
-            ->first();
+        return DB::transaction(function () use ($userId, $data) {
+            // 1. Kiểm tra hồ sơ bệnh nhân phải thuộc tài khoản user hiện tại
+            $patientProfile = PatientProfile::where('id', $data['patient_profile_id'])
+                ->where('user_id', $userId)
+                ->first();
 
-        if (! $patientProfile) {
-            throw new PatientProfileNotFoundException();
-        }
+            if (! $patientProfile) {
+                throw new PatientProfileNotFoundException();
+            }
 
-        // 2. Kiểm tra bệnh viện tồn tại
-        $hospital = Hospital::find($data['hospital_id']);
-        if (! $hospital) {
-            throw new HospitalNotFoundException();
-        }
+            // 2. Kiểm tra bệnh viện tồn tại
+            $hospital = Hospital::find($data['hospital_id']);
+            if (! $hospital) {
+                throw new HospitalNotFoundException();
+            }
 
-        // 3. Kiểm tra loại hình dịch vụ khám phải thuộc về bệnh viện này
-        $examType = ExamType::where('id', $data['exam_type_id'])
-            ->where('hospital_id', $hospital->id)
-            ->first();
+            // 3. Kiểm tra loại hình dịch vụ khám phải thuộc về bệnh viện này
+            $examType = ExamType::where('id', $data['exam_type_id'])
+                ->where('hospital_id', $hospital->id)
+                ->first();
 
-        if (! $examType) {
-            throw new ExamTypeMismatchException();
-        }
+            if (! $examType) {
+                throw new ExamTypeMismatchException();
+            }
 
-        // 4. Bắt đầu Database Transaction với Pessimistic Locking
-        return DB::transaction(function () use ($userId, $data, $patientProfile, $hospital, $examType) {
-            // 4.1. Khóa dòng slot độc quyền để chống Race Condition / Overbooking
+            // 4. Khóa bi quan dòng slot:
             $slot = Slot::where('id', $data['slot_id'])
                 ->where('owner_type', self::TYPE_HOSPITAL)
                 ->where('owner_id', $data['hospital_id'])
@@ -94,7 +93,8 @@ class BookingService
                 throw new SlotUnavailableException('Khung giờ khám đã qua hạn đặt');
             }
 
-            // 4.2. Kiểm tra trùng lịch active kèm khóa chống Race Condition
+            // 5. Xử lý dứt điểm Bug P0 (Re-book an toàn + Chống race condition):
+            // Khóa dòng và kiểm tra booking active
             $existingBooking = Booking::where('patient_profile_id', $data['patient_profile_id'])
                 ->where('slot_id', $slot->id)
                 ->whereNotIn('status', ['cancelled', 'rejected'])
@@ -105,11 +105,11 @@ class BookingService
                 throw new BookingAlreadyExistsException('Hồ sơ này đã có lịch hẹn active cho khung giờ này.');
             }
 
-            // 4.3. Tính thời hạn giữ chỗ tạm thời (mặc định 15 phút)
+            // 6. Tính thời hạn giữ chỗ tạm thời (mặc định 15 phút)
             $holdMinutes = isset($data['hold_minutes']) ? (int) $data['hold_minutes'] : 15;
             $slotHoldExpiresAt = now()->addMinutes($holdMinutes);
 
-            // Tạo bản ghi Booking
+            // 7. Tạo bản ghi Booking
             $booking = Booking::create([
                 'user_id' => $userId,
                 'patient_profile_id' => $patientProfile->id,
@@ -124,13 +124,13 @@ class BookingService
                 'note' => $data['note'] ?? null,
             ]);
 
-            // Tăng số lượng đã đặt và cập nhật trạng thái nếu chạm sức chứa
+            // 8. Tăng $slot->increment('booked_count'), cập nhật full nếu chạm capacity
             $slot->increment('booked_count');
             if ($slot->booked_count >= $slot->capacity) {
                 $slot->update(['status' => self::SLOT_FULL]);
             }
 
-            // Khởi tạo bản ghi Payment chờ thanh toán
+            // 9. Tạo Payment: status = 'pending', total_amount bằng giá của examType
             $paymentMethod = $data['payment_method'] ?? 'qr_pay';
             Payment::create([
                 'booking_id' => $booking->id,

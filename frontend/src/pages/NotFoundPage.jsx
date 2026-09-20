@@ -1,27 +1,40 @@
 import { Link } from "react-router-dom"
-import { AlertTriangle, Home } from "lucide-react"
+import { Home, Search, Stethoscope } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function NotFoundPage() {
   return (
-    <div className="max-w-md mx-auto px-4 py-20 text-center space-y-6">
-      <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
-        <AlertTriangle className="w-8 h-8" />
-      </div>
-      <div>
-        <h1 className="text-4xl font-extrabold text-slate-900">404</h1>
-        <h2 className="text-xl font-bold text-slate-800 mt-2">Không tìm thấy trang</h2>
-        <p className="text-sm text-slate-500 mt-2">
-          Đường dẫn bạn yêu cầu không tồn tại hoặc đã được di chuyển trong hệ thống MedSi.
-        </p>
-      </div>
-      <div>
-        <Button asChild className="bg-sky-600 hover:bg-sky-700 text-white">
-          <Link to="/">
-            <Home className="w-4 h-4 mr-2" />
-            Về trang chủ
-          </Link>
-        </Button>
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+      <div className="max-w-md w-full text-center space-y-6 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/90 shadow-medical">
+        <div className="w-20 h-20 rounded-3xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto shadow-inner">
+          <Stethoscope className="w-10 h-10" />
+        </div>
+
+        <div>
+          <span className="text-4xl sm:text-5xl font-black text-sky-600 tracking-tight block">404</span>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-2">
+            Không Tìm Thấy Trang Yêu Cầu
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+            Trang bạn đang truy cập có thể đã đổi tên, bị xóa hoặc đường dẫn không chính xác trên hệ thống MedSi.
+          </p>
+        </div>
+
+        <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+          <Button asChild className="bg-sky-600 hover:bg-sky-700 text-white font-semibold">
+            <Link to="/" className="flex items-center gap-1.5">
+              <Home className="w-4 h-4" />
+              <span>Về Trang Chủ</span>
+            </Link>
+          </Button>
+
+          <Button asChild variant="outline" className="border-slate-300">
+            <Link to="/doctors" className="flex items-center gap-1.5">
+              <Search className="w-4 h-4" />
+              <span>Tìm Bác Sĩ</span>
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { 
   User, 
   Mail, 
@@ -14,12 +14,16 @@ import {
   ArrowRight,
   AlertCircle
 } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 
 export default function RegisterPage() {
+  const { register } = useAuth()
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -55,10 +59,13 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true)
-    // Static UI demonstration (Task 1.3.7: form UI tĩnh, chưa gọi API)
     setTimeout(() => {
+      register(formData)
       setIsSubmitting(false)
       setFormSubmitted(true)
+      setTimeout(() => {
+        navigate("/")
+      }, 800)
     }, 600)
   }
 

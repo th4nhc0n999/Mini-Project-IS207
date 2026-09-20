@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { Stethoscope, ShieldCheck, HeartPulse, Mail, Phone, MapPin, ChevronRight } from "lucide-react"
+import { Stethoscope, ShieldCheck, Mail, Phone, MapPin, ChevronRight } from "lucide-react"
 
 export default function Footer() {
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { 
   Lock, 
   Mail, 
@@ -8,24 +8,26 @@ import {
   LogIn, 
   ShieldCheck, 
   Stethoscope, 
-  HeartHandshake, 
   ArrowRight,
-  Phone
+  UserCheck
 } from "lucide-react"
+import { useAuth } from "@/context/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 
 export default function LoginPage() {
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
-    identifier: "",
-    password: "",
+    identifier: "nguyenvana@gmail.com",
+    password: "password123",
     rememberMe: false,
   })
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formSubmitted, setFormSubmitted] = useState(false)
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -35,14 +37,28 @@ export default function LoginPage() {
     }))
   }
 
+  const handleQuickLogin = (role) => {
+    if (role === "admin") {
+      login("admin@medsi.vn", "admin123", "admin")
+      navigate("/admin/bookings")
+    } else {
+      login("nguyenvana@gmail.com", "password123", "patient")
+      navigate("/")
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     setIsSubmitting(true)
-    // Static UI demonstration (Task 1.3.7: form UI tĩnh, chưa gọi API)
     setTimeout(() => {
+      const res = login(formData.identifier, formData.password)
       setIsSubmitting(false)
-      setFormSubmitted(true)
-    }, 600)
+      if (res.user.role === "admin") {
+        navigate("/admin/bookings")
+      } else {
+        navigate("/")
+      }
+    }, 500)
   }
 
   return (
@@ -61,28 +77,46 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* Quick 1-Click Login Box for Testing */}
+        <div className="bg-white p-4 rounded-2xl border border-sky-200 shadow-sm space-y-2.5">
+          <p className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <UserCheck className="w-4 h-4 text-sky-600" />
+            <span>Đăng nhập nhanh (Test & Demo):</span>
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleQuickLogin("patient")}
+              className="border-sky-200 hover:bg-sky-50 text-sky-800 text-xs font-semibold h-9"
+            >
+              🩺 Bệnh nhân demo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleQuickLogin("admin")}
+              className="border-amber-200 hover:bg-amber-50 text-amber-800 text-xs font-semibold h-9"
+            >
+              🛡️ Admin demo
+            </Button>
+          </div>
+        </div>
+
         {/* Login Card */}
         <Card className="shadow-medical border-slate-200/90 bg-white">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-xl font-bold text-slate-800">
-              Chào mừng trở lại
+              Tài khoản cá nhân
             </CardTitle>
             <CardDescription className="text-slate-500 text-xs">
-              Vui lòng nhập tài khoản để quản lý lịch hẹn và xem kết quả khám
+              Nhập email/SĐT và mật khẩu để tiếp tục
             </CardDescription>
           </CardHeader>
 
           <CardContent>
-            {formSubmitted && (
-              <div className="mb-5 p-3 rounded-lg bg-sky-50 border border-sky-200 text-sky-800 text-xs flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-sky-600 mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-semibold">Mô phỏng gửi form UI tĩnh thành công!</p>
-                  <p className="text-sky-600 mt-0.5">Hệ thống đang ở giai đoạn UI mẫu, chưa kết nối API Laravel Sanctum.</p>
-                </div>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Field 1: Identifier (Email/Phone) */}
               <div className="space-y-1.5">
@@ -100,7 +134,7 @@ export default function LoginPage() {
                     required
                     value={formData.identifier}
                     onChange={handleChange}
-                    placeholder="vd: nguyenvana@gmail.com hoặc 0912345678"
+                    placeholder="vd: nguyenvana@gmail.com hoặc admin@medsi.vn"
                     className="pl-10 h-11 text-sm bg-slate-50/50 border-slate-200 focus-visible:bg-white focus-visible:ring-sky-500"
                   />
                 </div>
@@ -114,7 +148,7 @@ export default function LoginPage() {
                   </Label>
                   <a
                     href="#forgot-password"
-                    onClick={(e) => { e.preventDefault(); alert("Chức năng Quên mật khẩu sẽ kích hoạt khi tích hợp API.") }}
+                    onClick={(e) => { e.preventDefault(); alert("Mật khẩu thử nghiệm: bất kỳ chuỗi ký tự nào.") }}
                     className="text-xs font-medium text-sky-600 hover:text-sky-700 hover:underline"
                   >
                     Quên mật khẩu?
@@ -169,7 +203,7 @@ export default function LoginPage() {
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Đang xử lý...
+                    Đang xác thực...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">

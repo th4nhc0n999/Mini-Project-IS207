@@ -1,0 +1,206 @@
+
+Màn hình 1: Thanh toán / Chọn phương thức thanh toán
+ Hiển thị thông tin đơn đặt khám:
++Mã đặt khám / Booking ID (có thể là mã bệnh nhân/ SĐT)
++Tên bệnh nhân
++Cơ sở khám
++Loại hình khám + giá tiền cho loại hình đã chọn
++Các khoản phí khác nếu có
++Chuyên khoa khám
++Phòng khám
++Ngày giờ khám
++Tổng tiền cần thanh toán
++Hiển thị 05 phương thức thanh toán:
+
+
+
+ 1. Thẻ ATM và Tài khoản ngân hàng
+Thẻ ATM phải được kích hoạt chức năng thanh toán trực tuyến.
+Khi chọn sẽ mở danh sách ngân hàng hỗ trợ = cách click chọn + có thanh tìm kiếm ngân hàng.
+Ấn nút "Xác nhận thanh toán"
+------>Màn hình 2: Nhập Thông tin thẻ
+Sau khi chọn sẽ hiện màn hình nhập thông tin thẻ ATM + kèm mã đơn hàng
+Bao gồm: 
+**Hình thẻ ATM
++Số thẻ (khi nhập thì số thẻ sẽ hiện lên hình thẻ ATM thay thế các ****)
++Ngày hết hạn (Khi nhập thì sẽ hiện lên Issue Date trên thẻ thay thế MM/YY)
++Tên trên thẻ (Khi nhập thì sẽ thay thế “CARD HOLDER NAME” thành tên vừa nhập)
++Số điện thoại
++Email (opt)
+++Tick đồng ý các điều khoản theo quy định
++Button: Tiếp tục
+
+Sau khi ấn TIẾP TỤC
+------Màn hình 3: Hiện thị Tổng tiền &Xác nhận Thanh toán
+
+Bao gồm: 
++Mã đơn hàng
++SĐT
++Số tiền
++Phí dịch vụ
++Tổng tiền
+== Ảnh thẻ CHE ĐI THÔNG TIN THẺ CHỈ HIỆN TÊN
++Button: Thanh Toán
++Button: Huỷ Thanh Toán
+ Sau khi ấn thanh toán hệ thống sẽ 
+Bước 1: Khóa nút và gửi yêu cầu thanh toán
+Disable nút “Thanh toán” để tránh bấm nhiều lần
+Hiển thị loading: “Đang xử lý thanh toán...”
+Frontend gửi request tạo giao dịch tới backend
+----Màn hình 4: Đang xử lý / Chuyển hướng xác thực
+Hiển thị trạng thái:
+Đang khởi tạo giao dịch
+Đang kết nối cổng thanh toán
+Vui lòng không tắt trình duyệt hoặc quay lại
+Nếu cổng thanh toán yêu cầu xác thực thêm:
+Chuyển sang trang OTP / Internet Banking / trang xác thực ngân hàng
+Nếu không cần redirect riêng:
+Hiển thị popup / frame xác nhận giao dịch
+
+Tức là sau khi ấn “Thanh toán”, hệ thống thường sẽ gửi user sang bước xác thực ngân hàng hoặc đợi kết quả trả về từ cổng thanh toán.
+
+------Màn hình 5: Kết quả thanh toán
+ Có 3 trạng thái chính:
+5.1. Thanh toán thành công
+ Hiển thị:
+Thanh toán thành công
+Mã đơn hàng
+Mã giao dịch
+Thời gian thanh toán
+Phương thức thanh toán
+Số tiền đã thanh toán
+Trạng thái lịch khám: Đã xác nhận / Đặt khám thành công
+Button:
+Xem chi tiết lịch hẹn
+Về trang chủ
+Tải hóa đơn / biên nhận Hoặc QR Code về đơn đăng kí đó của bệnh nhân để đưa cho phía bệnh viện quét xác nhận
+5.2. Thanh toán thất bại
+ Hiển thị:
+Thanh toán thất bại
+Lý do thất bại (nếu có)
+Sai OTP
+Thẻ không đủ số dư
+Ngân hàng từ chối giao dịch
+Hết thời gian xác thực
+ Button:
+Thử lại
+Chọn phương thức khác
+Huỷ giao dịch
+5.3. Đang chờ xác nhận
+ Hiển thị:
+Giao dịch đang được xác nhận
+Vui lòng chờ trong giây lát hoặc kiểm tra lại sau
+ Button:
+Kiểm tra trạng thái
+Về lịch sử đặt khám
+Trạng thái này rất quan trọng vì có trường hợp tiền đã trừ nhưng web chưa nhận callback ngay.
+ 2. Thẻ thanh toán quốc tế
+Visa, Mastercard, JCB, American Express
+Khi chọn chuyển sang cổng nhập/xác thực thông tin thẻ.
+Ấn nút "Xác nhận thanh toán"
+------>Màn hình 2: Nhập Thông tin thẻ
+Sau khi chọn sẽ hiện màn hình nhập thông tin thẻ ATM + kèm mã đơn hàng
+Bao gồm: 
+**Hình thẻ ATM
++Số thẻ (khi nhập thì số thẻ sẽ hiện lên hình thẻ ATM thay thế các ****)
++Ngày hết hạn (Khi nhập thì sẽ hiện lên Issue Date trên thẻ thay thế MM/YY)
++Tên trên thẻ (Khi nhập thì sẽ thay thế “CARD HOLDER NAME” thành tên vừa nhập)
++Số điện thoại
++Email (opt)
+++Tick đồng ý các điều khoản theo quy định
+
+Sau khi ấn TIẾP TỤC
+------Màn hình 3: Hiện thị Tổng tiền &Xác nhận Thanh toán
+
+Bao gồm: 
++Mã đơn hàng
++SĐT
++Số tiền
++Phí dịch vụ
++Tổng tiền
+== Ảnh thẻ CHE ĐI THÔNG TIN THẺ CHỈ HIỆN TÊN
++Button: Thanh Toán
++Button: Huỷ Thanh Toán
+ Sau khi ấn thanh toán hệ thống sẽ 
+Bước 1: Khóa nút và gửi yêu cầu thanh toán
+Disable nút “Thanh toán” để tránh bấm nhiều lần
+Hiển thị loading: “Đang xử lý thanh toán...”
+Frontend gửi request tạo giao dịch tới backend
+----Màn hình 4: Đang xử lý / Chuyển hướng xác thực
+Hiển thị trạng thái:
+Đang khởi tạo giao dịch
+Đang kết nối cổng thanh toán
+Vui lòng không tắt trình duyệt hoặc quay lại
+Nếu cổng thanh toán yêu cầu xác thực thêm:
+Chuyển sang trang OTP / Internet Banking / trang xác thực ngân hàng
+Nếu không cần redirect riêng:
+Hiển thị popup / frame xác nhận giao dịch
+
+Tức là sau khi ấn “Thanh toán”, hệ thống thường sẽ gửi user sang bước xác thực ngân hàng hoặc đợi kết quả trả về từ cổng thanh toán.
+
+------Màn hình 5: Kết quả thanh toán
+ Có 3 trạng thái chính:
+5.1. Thanh toán thành công
+ Hiển thị:
+Thanh toán thành công
+Mã đơn hàng
+Mã giao dịch
+Thời gian thanh toán
+Phương thức thanh toán
+Số tiền đã thanh toán
+Trạng thái lịch khám: Đã xác nhận / Đặt khám thành công
+Button:
+Xem chi tiết lịch hẹn
+Về trang chủ
+Tải hóa đơn / biên nhận Hoặc QR Code về đơn đăng kí đó của bệnh nhân để đưa cho phía bệnh viện quét xác nhận
+5.2. Thanh toán thất bại
+ Hiển thị:
+Thanh toán thất bại
+Lý do thất bại (nếu có)
+Sai OTP
+Thẻ không đủ số dư
+Ngân hàng từ chối giao dịch
+Hết thời gian xác thực
+ Button:
+Thử lại
+Chọn phương thức khác
+Huỷ giao dịch
+5.3. Đang chờ xác nhận
+ Hiển thị:
+Giao dịch đang được xác nhận
+Vui lòng chờ trong giây lát hoặc kiểm tra lại sau
+ Button:
+Kiểm tra trạng thái
+Về lịch sử đặt khám
+Trạng thái này rất quan trọng vì có trường hợp tiền đã trừ nhưng web chưa nhận callback ngay.
+
+ 3. Thanh toán qua mã QR
+Người dùng chọn thanh toán = QR
+-- Màn hình 2: Hiển thị màn hình QR 
+Hiển thị QR để người dùng quét bằng ứng dụng ngân hàng/cổng Payoo.
+
+-Người dùng có thể chọn:
+Moblie Banking(btn)
+ZaloPay(btn)
+ShoppePay(btn)
+Để tiến hành quét thanh toán
+Ở phần Mã đơn hàng có thể bấm vô + để mở  chi tiết đơn hàng
+- Ở dưới cùng sẽ có Btn Huỷ thanh toán:
+
+ 4. Thanh toán tại cửa hàng tiện lợi
+Ví dụ theo giao diện: Circle K, MiniStop, FamilyMart,...
+Hệ thống tạo mã thanh toán để người dùng thanh toán tại điểm hỗ trợ.
+-Hiển thị ra mã đơn hàng
+- Yêu cầu người dùng nhập Email or SĐT để tiến hành gửi “mã thanh toán”
+
+- Sau khi nhận xong sẽ gửi mã thanh toán về email/sdt tương ứng, đồng thời màn hình sẽ hiển thị thông tin thanh toán:
+Thông tin thời gian khả dụng
+Mã thanh toán
+Mã đơn hàng
+Tổng tiền
+
+ 5. Thanh toán qua MoMo
+Chuyển sang MoMo để người dùng xác nhận giao dịch.
+Hệ thống tiến hành gọi API cho Momo để lấy QR thanh toán, đếm ngược thời gian thanh toán 
+Có nút “Quay về” cho người dùng muốn dừng thanh toán
+Sau khi hệ thống đã nhận tiền thanh công sẽ xuất hiện màn hình thanh toán thành công + hoá đơn điện tử thể hiện thông tin đơn hàng

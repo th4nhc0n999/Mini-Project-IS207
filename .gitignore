@@ -1,0 +1,5 @@
+# Local extraction and notes
+extracted_*.txt
+*.sqlite
+*.sqlite3
+tmp/

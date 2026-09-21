@@ -107,16 +107,41 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const updateUserProfile = (updatedData) => {
+    const updated = { ...user, ...updatedData }
+    setUser(updated)
+    return updated
+  }
+
   const addPatientProfile = (profileData) => {
     const newProfile = {
       ...profileData,
-      id: Date.now(),
+      id: profileData.id || Date.now(),
       user_id: user?.id || 1,
     }
     const updated = [...patientProfiles, newProfile]
     setPatientProfiles(updated)
     savePatientProfiles(updated)
     return newProfile
+  }
+
+  const updatePatientProfile = (profileId, profileData) => {
+    const updated = patientProfiles.map((p) => {
+      if (p.id === profileId) {
+        return { ...p, ...profileData }
+      }
+      return p
+    })
+    setPatientProfiles(updated)
+    savePatientProfiles(updated)
+    return updated
+  }
+
+  const deletePatientProfile = (profileId) => {
+    const updated = patientProfiles.filter((p) => p.id !== profileId)
+    setPatientProfiles(updated)
+    savePatientProfiles(updated)
+    return updated
   }
 
   const role = user ? user.role : "guest"
@@ -140,6 +165,9 @@ export function AuthProvider({ children }) {
         switchRole,
         patientProfiles,
         addPatientProfile,
+        updatePatientProfile,
+        deletePatientProfile,
+        updateUserProfile,
       }}
     >
       {children}

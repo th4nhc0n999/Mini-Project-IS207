@@ -87,9 +87,42 @@ export default function DoctorDetailPage() {
   const morningSlots = daySlots.filter((s) => s.period === "morning" || s.start_time < "12:00")
   const afternoonSlots = daySlots.filter((s) => s.period === "afternoon" || s.start_time >= "12:00")
 
+  // Helper to check if a slot has already passed in real-time (Fix BUG-BOOKING-01)
+  const isPastSlot = (slot) => {
+    if (!slot || !slot.work_date || !slot.start_time) return false
+
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, "0")
+    const day = String(now.getDate()).padStart(2, "0")
+    const todayStr = `${year}-${month}-${day}`
+    const todayIso = now.toISOString().split("T")[0]
+
+    // If slot date is in the past
+    if (slot.work_date < todayStr && slot.work_date < todayIso) {
+      return true
+    }
+
+    // If slot date is today, compare start_time with current time (HH:mm)
+    if (slot.work_date === todayStr || slot.work_date === todayIso) {
+      const currentHours = String(now.getHours()).padStart(2, "0")
+      const currentMinutes = String(now.getMinutes()).padStart(2, "0")
+      const currentTime = `${currentHours}:${currentMinutes}`
+      return slot.start_time <= currentTime
+    }
+
+    return false
+  }
+
   // Handle Proceed to Booking
   const handleProceedToBooking = () => {
     if (!selectedSlot) return
+
+    if (isPastSlot(selectedSlot)) {
+      alert("Khung giờ khám đã qua hạn đặt. Vui lòng chọn khung giờ khác.")
+      setSelectedSlot(null)
+      return
+    }
 
     // Save selected booking context in sessionStorage or state
     const bookingContext = {
@@ -285,7 +318,9 @@ export default function DoctorDetailPage() {
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {morningSlots.map((slot) => {
+                      const isPast = isPastSlot(slot)
                       const isFull = slot.status === "full" || slot.booked_count >= slot.capacity
+                      const isDisabled = isPast || isFull
                       const isSelected = selectedSlot?.id === slot.id
                       const remaining = slot.capacity - slot.booked_count
 
@@ -293,19 +328,27 @@ export default function DoctorDetailPage() {
                         <button
                           key={slot.id}
                           type="button"
-                          disabled={isFull}
+                          disabled={isDisabled}
                           onClick={() => setSelectedSlot(slot)}
                           className={`p-2.5 rounded-xl border text-center transition-all text-xs relative ${
-                            isFull
+                            isPast
+                              ? "bg-slate-100/80 border-slate-200 text-slate-400 cursor-not-allowed select-none"
+                              : isFull
                               ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
                               : isSelected
                               ? "bg-sky-50 border-sky-600 text-sky-700 font-bold ring-2 ring-sky-500/20"
                               : "bg-white border-slate-200 text-slate-800 hover:border-sky-300 hover:bg-sky-50/40"
                           }`}
                         >
-                          <div className="font-semibold">{slot.start_time} - {slot.end_time}</div>
+                          <div className={`font-semibold ${isPast ? "text-slate-400" : ""}`}>
+                            {slot.start_time} - {slot.end_time}
+                          </div>
                           <div className="text-[10px] mt-0.5">
-                            {isFull ? (
+                            {isPast ? (
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-200 text-slate-500">
+                                Đã qua giờ
+                              </span>
+                            ) : isFull ? (
                               <span className="text-rose-500 font-medium">Hết chỗ</span>
                             ) : (
                               <span className="text-emerald-600 font-medium">Còn {remaining} chỗ</span>
@@ -325,7 +368,9 @@ export default function DoctorDetailPage() {
                   </span>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {afternoonSlots.map((slot) => {
+                      const isPast = isPastSlot(slot)
                       const isFull = slot.status === "full" || slot.booked_count >= slot.capacity
+                      const isDisabled = isPast || isFull
                       const isSelected = selectedSlot?.id === slot.id
                       const remaining = slot.capacity - slot.booked_count
 
@@ -333,19 +378,27 @@ export default function DoctorDetailPage() {
                         <button
                           key={slot.id}
                           type="button"
-                          disabled={isFull}
+                          disabled={isDisabled}
                           onClick={() => setSelectedSlot(slot)}
                           className={`p-2.5 rounded-xl border text-center transition-all text-xs relative ${
-                            isFull
+                            isPast
+                              ? "bg-slate-100/80 border-slate-200 text-slate-400 cursor-not-allowed select-none"
+                              : isFull
                               ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
                               : isSelected
                               ? "bg-sky-50 border-sky-600 text-sky-700 font-bold ring-2 ring-sky-500/20"
                               : "bg-white border-slate-200 text-slate-800 hover:border-sky-300 hover:bg-sky-50/40"
                           }`}
                         >
-                          <div className="font-semibold">{slot.start_time} - {slot.end_time}</div>
+                          <div className={`font-semibold ${isPast ? "text-slate-400" : ""}`}>
+                            {slot.start_time} - {slot.end_time}
+                          </div>
                           <div className="text-[10px] mt-0.5">
-                            {isFull ? (
+                            {isPast ? (
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-200 text-slate-500">
+                                Đã qua giờ
+                              </span>
+                            ) : isFull ? (
                               <span className="text-rose-500 font-medium">Hết chỗ</span>
                             ) : (
                               <span className="text-emerald-600 font-medium">Còn {remaining} chỗ</span>

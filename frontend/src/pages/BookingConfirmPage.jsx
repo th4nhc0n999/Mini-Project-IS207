@@ -95,6 +95,26 @@ export default function BookingConfirmPage() {
       return
     }
 
+    // Validate if slot is in the past (Fix BUG-BOOKING-01)
+    if (bookingContext?.work_date && bookingContext?.start_time) {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, "0")
+      const day = String(now.getDate()).padStart(2, "0")
+      const todayStr = `${year}-${month}-${day}`
+      const todayIso = now.toISOString().split("T")[0]
+
+      const isPast =
+        (bookingContext.work_date < todayStr && bookingContext.work_date < todayIso) ||
+        ((bookingContext.work_date === todayStr || bookingContext.work_date === todayIso) &&
+          bookingContext.start_time <= `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
+
+      if (isPast) {
+        alert("Khung giờ khám đã qua hạn đặt. Vui lòng quay lại để chọn khung giờ khác.")
+        return
+      }
+    }
+
     setIsSubmitting(true)
 
     setTimeout(() => {

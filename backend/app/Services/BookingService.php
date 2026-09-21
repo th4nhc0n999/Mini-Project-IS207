@@ -239,8 +239,8 @@ class BookingService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $slot || $slot->status !== self::SLOT_AVAILABLE) {
-                throw new SlotUnavailableException();
+            if (! $slot) {
+                throw new SlotUnavailableException('Khung giờ khám không tồn tại.');
             }
 
             // Kiểm tra tính nhất quán nếu client có gửi doctor_id lên
@@ -253,12 +253,7 @@ class BookingService
                 throw new SlotUnavailableException('Khung giờ khám đã qua hạn đặt');
             }
 
-            // 3. Kiểm tra sức chứa: booked_count < capacity
-            if ($slot->booked_count >= $slot->capacity) {
-                throw new SlotUnavailableException();
-            }
-
-            // 4. Kiểm tra booking trùng theo (patient_profile_id, slot_id)
+            // 3. Kiểm tra booking trùng theo (patient_profile_id, slot_id)
             $existingBooking = Booking::where('patient_profile_id', $patientProfile->id)
                 ->where('slot_id', $slot->id)
                 ->whereNotIn('status', ['cancelled', 'rejected'])
@@ -267,6 +262,11 @@ class BookingService
 
             if ($existingBooking) {
                 throw new BookingAlreadyExistsException('Hồ sơ này đã có lịch hẹn active cho khung giờ này.');
+            }
+
+            // 4. Kiểm tra sức chứa và trạng thái khả dụng của slot
+            if ($slot->status !== self::SLOT_AVAILABLE || $slot->booked_count >= $slot->capacity) {
+                throw new SlotUnavailableException();
             }
 
             // 5. doctor_id: bắt buộc lấy từ slot (owner_id) vì slot owner_type = doctor
